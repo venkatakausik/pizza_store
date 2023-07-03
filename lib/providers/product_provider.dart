@@ -1,22 +1,46 @@
 import 'package:flutter/material.dart';
 
 class ProductProvider with ChangeNotifier {
-  List toppings = [];
-  late String productSize;
-  double sizePrice = 0.0;
+  Map<String, dynamic> sizeToppingsDoc = {};
 
-  getProductSize(productSize) {
-    this.productSize = productSize;
+  getProductPriceForSize(docId, productSize, sizePrice) {
+    sizeToppingsDoc[docId] = {
+      "productSize": productSize,
+      "sizePrice": sizePrice
+    };
     notifyListeners();
   }
 
-  getProductPriceForSize(sizePrize) {
-    this.sizePrice = sizePrize;
+  getProductToppings(docId, topping) {
+    List toppings = [];
+    if ((sizeToppingsDoc[docId] as Map).containsKey("toppings")) {
+      toppings = sizeToppingsDoc[docId]['toppings'];
+    }
+    toppings.add(topping);
+    sizeToppingsDoc[docId]['toppings'] = toppings;
     notifyListeners();
   }
 
-  getProductToppings(toppings) {
-    this.toppings = toppings;
+  removeProductTopping(docId, topping) {
+    if ((sizeToppingsDoc[docId] as Map).containsKey("toppings")) {
+      (this.sizeToppingsDoc[docId]['toppings'] as List).forEach((toppingDoc) {
+        if (toppingDoc['name'] == topping["name"]) {
+          (this.sizeToppingsDoc[docId]['toppings'] as List).remove(toppingDoc);
+          notifyListeners();
+        }
+      });
+    }
+  }
+
+  reset() {
+    this.sizeToppingsDoc = {};
     notifyListeners();
+  }
+
+  void removeProductFromMap(String docId) {
+    if (sizeToppingsDoc.containsKey(docId)) {
+      this.sizeToppingsDoc.remove(docId);
+      notifyListeners();
+    }
   }
 }

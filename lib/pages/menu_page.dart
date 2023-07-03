@@ -115,7 +115,7 @@ class _MenuPageState extends State<MenuPage> {
             child: FirestoreListView<Map<String, dynamic>>(
               shrinkWrap: true,
               pageSize: 10,
-              padding: const EdgeInsets.all(8.0),
+              // padding: const EdgeInsets.all(8.0),
               loadingBuilder: (context) =>
                   Center(child: CircularProgressIndicator()),
               emptyBuilder: (context) => SmallText(text: 'No data'),

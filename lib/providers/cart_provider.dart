@@ -10,7 +10,7 @@ class CartProvider with ChangeNotifier {
   double distance = 0.0;
   String sellerUid = '';
 
-  bool cod = false;
+  bool cod = true;
   late QuerySnapshot snapshot;
   List cartList = [];
 
@@ -22,11 +22,13 @@ class CartProvider with ChangeNotifier {
         .doc(_productService.user!.uid)
         .collection('products')
         .get();
+    DocumentSnapshot _cartDoc =
+        await _productService.cart.doc(_productService.user!.uid).get();
     if (snapshot == null) {
       return null;
     }
     snapshot.docs.forEach((doc) {
-      if (_newList.contains(doc.data())) {
+      if (!_newList.contains(doc.data())) {
         _newList.add(doc.data());
         this.cartList = _newList;
         notifyListeners();
@@ -35,8 +37,11 @@ class CartProvider with ChangeNotifier {
       saving = saving + (doc['comparedPrice'] - doc['price']) > 0
           ? (doc['comparedPrice'] - doc['price'])
           : 0;
-      sellerUid = doc['seller']['sellerUid'];
     });
+
+    if (_cartDoc.exists) {
+      sellerUid = _cartDoc.get('seller');
+    }
 
     this.subTotal = cartTotal;
     this.cartQty = snapshot.size;

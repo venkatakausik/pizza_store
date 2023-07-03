@@ -44,7 +44,7 @@ class UserServices {
     User? user = FirebaseAuth.instance.currentUser;
     getUserById(user!.uid).then((userData) {
       return FirebaseFirestore.instance
-          .collection('vendors')
+          .collection('users')
           .doc(user.uid)
           .update({"deviceToken": deviceToken});
     });

@@ -10,10 +10,16 @@ import 'package:persistent_bottom_nav_bar_v2/persistent-tab-view.dart';
 import 'cart_notification.dart';
 import 'menu_page.dart';
 
-class MainScreen extends StatelessWidget {
+class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
   static const String id = "main-screen";
 
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  int selectedIndex = 0;
   @override
   Widget build(BuildContext context) {
     List<Widget> _buildScreens() {
@@ -32,7 +38,7 @@ class MainScreen extends StatelessWidget {
           inactiveColorPrimary: CupertinoColors.systemGrey,
         ),
         PersistentBottomNavBarItem(
-          icon: Icon(Icons.menu_book_outlined),
+          icon: Icon(Icons.restaurant_menu_outlined),
           title: ("Menu"),
           activeColorPrimary: Theme.of(context).primaryColor,
           inactiveColorPrimary: CupertinoColors.systemGrey,
@@ -53,9 +59,12 @@ class MainScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 56.0),
-        child: CartNotification(),
+      floatingActionButton: Visibility(
+        visible: selectedIndex != 2,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 56.0),
+          child: CartNotification(),
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       body: PersistentTabView(
@@ -64,6 +73,11 @@ class MainScreen extends StatelessWidget {
         screens: _buildScreens(),
         items: _navBarsItems(),
         navBarHeight: 56,
+        onItemSelected: (value) {
+          setState(() {
+            selectedIndex = value;
+          });
+        },
         confineInSafeArea: true,
         backgroundColor: Colors.white, // Default is Colors.white.
         handleAndroidBackButtonPress: true, // Default is true.

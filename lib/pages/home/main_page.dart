@@ -128,13 +128,18 @@ class _MainFoodPageState extends State<MainFoodPage> {
                         }
                       });
                     },
-                    child: SmallText(
-                      text: _address == null || _address!.isEmpty
-                          ? 'Press here to select delivery address'
-                          : _address!,
-                      color: Colors.black54,
-                      maxLines: 2,
-                      overFlow: TextOverflow.clip,
+                    child: SizedBox(
+                      width: MediaQuery.of(context).size.width -
+                          Dimensions.width10 -
+                          Dimensions.width20,
+                      child: SmallText(
+                        text: _address == null || _address!.isEmpty
+                            ? 'Press here to select delivery address'
+                            : _address!,
+                        color: Colors.black54,
+                        maxLines: 3,
+                        overFlow: TextOverflow.clip,
+                      ),
                     ),
 
                     // child: Column(

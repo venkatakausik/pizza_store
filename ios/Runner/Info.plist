@@ -13,7 +13,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>pizza_store</string>
+	<string>Pizza Store</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

@@ -18,6 +18,7 @@ import '../../widgets/big_text.dart';
 import '../../widgets/image_text.dart';
 import '../../widgets/non_veg_icon.dart';
 import '../../widgets/product_card.dart';
+import '../../widgets/product_details.dart';
 import '../../widgets/veg_icon.dart';
 import '../search_page.dart';
 
@@ -374,15 +375,14 @@ class _FoodPageBodyState extends State<FoodPageBody> {
                                   ),
                                   SizedBox(height: Dimensions.height10),
                                   new InkWell(
-                                      onTap: () => showModalBottomSheet(
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.vertical(
-                                              top: Radius.circular(20),
-                                            ),
-                                          ),
-                                          context: context,
-                                          builder: (context) =>
-                                              buildBottomSheet(document)),
+                                      onTap: () {
+                                        Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ProductDetails(
+                                                        document: document)));
+                                      },
                                       child: SmallText(
                                         text: "More Details",
                                         weight: FontWeight.normal,
@@ -534,7 +534,10 @@ class _FoodPageBodyState extends State<FoodPageBody> {
                       top: 8.0,
                     ),
                     child: Column(
-                      children: [AddToCartWidget(document: document)],
+                      children: [
+                        AddToCartWidget(
+                            document: document, screen: 'bottomSheet')
+                      ],
                     ),
                   )
                 ],
@@ -573,15 +576,12 @@ class _FoodPageBodyState extends State<FoodPageBody> {
     return Transform(
         transform: matrix,
         child: InkWell(
-          onTap: () => showModalBottomSheet<dynamic>(
-              context: context,
-              isScrollControlled: true,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(20),
-                ),
-              ),
-              builder: (context) => buildBottomSheet(document)),
+          onTap: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => ProductDetails(document: document)));
+          },
           child: Stack(children: [
             Container(
               height: Dimensions.pageViewContainer,

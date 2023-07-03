@@ -23,7 +23,7 @@ class NotificationServices {
             'notification': <String, dynamic>{
               'body': body,
               'title': title,
-              'android_channel_id': 'piiza_store_vendor'
+              'android_channel_id': 'piiza_store'
             },
             'to': token
           }));

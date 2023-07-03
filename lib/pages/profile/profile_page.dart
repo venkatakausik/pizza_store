@@ -74,15 +74,20 @@ class ProfilePage extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisAlignment: MainAxisAlignment.start,
                               children: [
-                                SmallText(
-                                    size: 20,
-                                    overFlow: TextOverflow.clip,
-                                    maxLines: 2,
-                                    color: Colors.black,
-                                    text:
-                                        userDetails.snapshot.get('name') != null
-                                            ? '${userDetails.snapshot['name']}'
-                                            : 'Update your name'),
+                                FutureBuilder(
+                                    future: userDetails.getUserDetails(),
+                                    builder: (context, snapshot) {
+                                      return SmallText(
+                                          size: 20,
+                                          overFlow: TextOverflow.clip,
+                                          maxLines: 2,
+                                          color: Colors.black,
+                                          text: userDetails.snapshot
+                                                      .get('name') !=
+                                                  null
+                                              ? '${userDetails.snapshot['name']}'
+                                              : 'Update your name');
+                                    }),
                                 SizedBox(height: Dimensions.height20),
                                 Row(
                                   children: [
@@ -202,20 +207,20 @@ class ProfilePage extends StatelessWidget {
                               leading: Icon(Icons.history_outlined),
                             ),
                           ),
-                          ListTile(
-                            title: SmallText(text: "Favorites"),
-                            trailing: const Icon(Icons.arrow_forward_ios),
-                            // contentPadding: EdgeInsets.all(8.0),
-                            leading: CircleAvatar(
-                              backgroundColor: Colors.grey.shade200,
-                              radius: 15,
-                              child: Icon(
-                                Icons.favorite_border,
-                                color: Colors.deepOrangeAccent,
-                                size: Dimensions.iconSize24 / 1.5,
-                              ),
-                            ),
-                          ),
+                          // ListTile(
+                          //   title: SmallText(text: "Favorites"),
+                          //   trailing: const Icon(Icons.arrow_forward_ios),
+                          //   // contentPadding: EdgeInsets.all(8.0),
+                          //   leading: CircleAvatar(
+                          //     backgroundColor: Colors.grey.shade200,
+                          //     radius: 15,
+                          //     child: Icon(
+                          //       Icons.favorite_border,
+                          //       color: Colors.deepOrangeAccent,
+                          //       size: Dimensions.iconSize24 / 1.5,
+                          //     ),
+                          //   ),
+                          // ),
                           // ListTile(
                           //   title: SmallText(text: "Address book"),
                           //   trailing: const Icon(Icons.arrow_forward_ios),

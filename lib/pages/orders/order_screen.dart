@@ -1,10 +1,8 @@
 import 'package:chips_choice/chips_choice.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
+import 'package:get/get_utils/get_utils.dart';
 import 'package:persistent_bottom_nav_bar_v2/persistent-tab-view.dart';
 import 'package:pizza_store/pages/profile/profile_page.dart';
 import 'package:pizza_store/providers/order_provider.dart';
@@ -28,12 +26,12 @@ class _OrderScreenState extends State<OrderScreen> {
   OrderServices _orderServices = OrderServices();
   User? user = FirebaseAuth.instance.currentUser;
 
-  int tag = 1;
+  int tag = 0;
   List<String> options = [
     'All Orders',
     'Ordered',
     'Accepted',
-    'Picked up',
+    'Picked Up',
     'On the way',
     'Delivered'
   ];
@@ -142,7 +140,7 @@ class _OrderScreenState extends State<OrderScreen> {
                                     "Amount : \$${document['total'].toStringAsFixed(0)}"),
                             subtitle: SmallText(
                                 text:
-                                    "On ${DateFormat.yMMMd().format(document['timestamp'])}"),
+                                    "On ${DateFormat('MMM dd, yyyy HH:mm:ss').format((document['timestamp'] as Timestamp).toDate())}"),
                           ),
                           if (document['deliveryPartner']['name'].length > 2)
                             Padding(
@@ -188,20 +186,68 @@ class _OrderScreenState extends State<OrderScreen> {
                                   physics: NeverScrollableScrollPhysics(),
                                   itemBuilder: (context, index) {
                                     return ListTile(
-                                      leading: CircleAvatar(
-                                        backgroundColor: Colors.white,
-                                        child: Image.network(
-                                            document['products'][index]
-                                                ['productImage']),
-                                      ),
-                                      title: SmallText(
-                                          text: document['products'][index]
-                                              ['productName']),
-                                      subtitle: SmallText(
-                                          color: Colors.grey,
-                                          text:
-                                              '${document['products'][index]['qty']} x \$${document['products'][index]['price'].toStringAsFixed(0)} = \$${document['products'][index]['total'].toStringAsFixed(0)}'),
-                                    );
+                                        leading: CircleAvatar(
+                                          backgroundColor: Colors.white,
+                                          child: Image.network(
+                                              document['products'][index]
+                                                  ['productImage']),
+                                        ),
+                                        title: SmallText(
+                                            text: document['products'][index]
+                                                ['productName']),
+                                        subtitle: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            SmallText(
+                                                color: Colors.grey,
+                                                text:
+                                                    '${document['products'][index]['qty']} x \$${document['products'][index]['price'].toStringAsFixed(0)}'),
+                                            if ((document['products'][index]
+                                                    as Map<String, dynamic>)
+                                                .containsKey("toppings"))
+                                              Column(
+                                                children: (document['products']
+                                                            [index]["toppings"]
+                                                        as List)
+                                                    .map((topping) {
+                                                  return Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      SmallText(
+                                                        text: topping["name"],
+                                                        color: Colors.grey,
+                                                      ),
+                                                      SizedBox(
+                                                        width:
+                                                            Dimensions.width5,
+                                                      ),
+                                                      SmallText(
+                                                        text: (topping["type"]
+                                                                as String)
+                                                            .capitalize!,
+                                                        color: Colors.grey,
+                                                      ),
+                                                      SizedBox(
+                                                        width:
+                                                            Dimensions.width5,
+                                                      ),
+                                                      SmallText(
+                                                        text:
+                                                            "\$${topping["price"]}",
+                                                        weight: FontWeight.bold,
+                                                        color: Colors.grey,
+                                                      ),
+                                                    ],
+                                                  );
+                                                }).toList(),
+                                              ),
+                                          ],
+                                        )
+                                        // '${document['products'][index]['qty']} x \$${document['products'][index]['price'].toStringAsFixed(0)} = \$${document['products'][index]['total'].toStringAsFixed(0)}'),
+                                        );
                                   }),
                             ],
                           ),

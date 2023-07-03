@@ -2,8 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:get/get.dart';
 import 'package:persistent_bottom_nav_bar_v2/persistent-tab-view.dart';
+import 'package:pizza_store/pages/main_screen.dart';
 import 'package:pizza_store/pages/map_screen.dart';
+import 'package:pizza_store/pages/orders/order_screen.dart';
 import 'package:pizza_store/pages/profile/profile_page.dart';
 import 'package:pizza_store/providers/cart_provider.dart';
 import 'package:pizza_store/services/product_services.dart';
@@ -17,6 +20,7 @@ import '../providers/location_provider.dart';
 import '../services/notification_services.dart';
 import '../services/order_services.dart';
 import '../utils/dimensions.dart';
+import '../widgets/add_to_cart_widget.dart';
 import '../widgets/big_text.dart';
 import '../widgets/non_veg_icon.dart';
 import '../widgets/veg_icon.dart';
@@ -50,20 +54,21 @@ class _CartPageState extends State<CartPage> {
   }
 
   _saveOrder(CartProvider cartProvider, payable) {
-    _orderServices.saveOrder({
+    Map<String, dynamic> data = {
       'products': cartProvider.cartList,
       'userId': user!.uid,
       'deliveryFee': deliveryFee,
       'total': payable,
       'cod': cartProvider.cod,
       'orderStatus': 'Ordered',
-      'timestamp': DateTime.now().toString(),
+      'timestamp': DateTime.now(),
       'deliveryPartner': {
         'name': '',
         'phone': '',
         'location': '',
       }
-    }).then((value) {
+    };
+    _orderServices.saveOrder(data).then((value) {
       _userService.getShopById(cartProvider.sellerUid).then((document) {
         var _sellerDeviceToken = document['deviceToken'];
         _notificationService.sendPushMessage(
@@ -71,8 +76,16 @@ class _CartPageState extends State<CartPage> {
       });
       _productService.deleteCart().then((value) {
         _productService.checkCartData().then((value) {
+          cartProvider.getCartTotal();
           EasyLoading.showSuccess("Order placed successfully");
-          Navigator.pop(context);
+          pushNewScreenWithRouteSettings(
+            context,
+            settings: RouteSettings(name: OrderScreen.id),
+            screen: OrderScreen(),
+            withNavBar: true,
+            pageTransitionAnimation: PageTransitionAnimation.cupertino,
+          );
+          // Navigator.pop(context);
         });
       });
     });
@@ -93,526 +106,655 @@ class _CartPageState extends State<CartPage> {
     var _cartProvider = Provider.of<CartProvider>(context);
     var _payable = _cartProvider.subTotal + deliveryFee;
     final locationData = Provider.of<LocationProvider>(context);
-    return Scaffold(
-      backgroundColor: Colors.grey.shade200,
-      resizeToAvoidBottomInset: false,
-      bottomSheet: Container(
-        height: 160,
-        color: Colors.blueGrey[900],
-        child: Column(
-          children: [
-            Container(
-              width: MediaQuery.of(context).size.width,
-              height: 100,
-              color: Colors.white,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.grey.shade200,
+        resizeToAvoidBottomInset: false,
+        body: _cartProvider.cartQty > 0
+            ? SingleChildScrollView(
                 child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: SmallText(
-                              text: "Deliver to this address",
-                              weight: FontWeight.bold,
-                            ),
-                          ),
-                          InkWell(
-                            onTap: () {
-                              setState(() {
-                                _loading = true;
-                              });
-                              locationData.getCurrentPosition().then((value) {
-                                setState(() {
-                                  _loading = false;
-                                });
-                                if (value != null) {
-                                  pushNewScreenWithRouteSettings(
-                                    context,
-                                    settings: RouteSettings(name: MapScreen.id),
-                                    screen: MapScreen(),
-                                    withNavBar: false,
-                                    pageTransitionAnimation:
-                                        PageTransitionAnimation.cupertino,
-                                  );
-                                  // Navigator.pushNamed(context, MapScreen.id);
-                                } else {
-                                  setState(() {
-                                    _loading = false;
-                                  });
-                                  print("Permission not allowed");
-                                }
-                              });
-                            },
-                            child: _loading
-                                ? CircularProgressIndicator()
-                                : SmallText(
-                                    text: "Change",
-                                    color: Colors.red,
-                                    weight: FontWeight.bold,
-                                  ),
-                          ),
-                        ],
-                      ),
-                      SmallText(
-                        text: "$_location, $_address",
-                        maxLines: 3,
-                        color: Colors.grey,
-                      ),
-                    ]),
-              ),
-            ),
-            Center(
-              child: Padding(
-                padding: EdgeInsets.only(left: 20, right: 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SmallText(
-                          text:
-                              '\$${_cartProvider.subTotal.toStringAsFixed(0)}',
-                          color: Colors.white,
-                          weight: FontWeight.bold,
-                        ),
-                        SmallText(
-                          text: '(Including taxes)',
-                          color: Colors.white,
-                          weight: FontWeight.bold,
-                          size: 10,
-                        )
-                      ],
-                    ),
-                    ElevatedButton(
-                        onPressed: () {
-                          EasyLoading.show(status: "Please wait..");
-                          _userService.getUserById(user!.uid).then((value) {
-                            if (value['name'] == null) {
-                              EasyLoading.dismiss();
-                              pushNewScreenWithRouteSettings(
-                                context,
-                                settings: RouteSettings(name: ProfilePage.id),
-                                screen: ProfilePage(),
-                                withNavBar: false,
-                                pageTransitionAnimation:
-                                    PageTransitionAnimation.cupertino,
-                              );
-                            } else {
-                              EasyLoading.show(status: "Please wait..");
-                              _saveOrder(_cartProvider, _payable);
-                              EasyLoading.showSuccess(
-                                  "Order placed successfully");
-                            }
-                          });
-                        },
-                        style:
-                            ElevatedButton.styleFrom(primary: Colors.redAccent),
-                        child: _checkingUser
-                            ? CircularProgressIndicator()
-                            : SmallText(
-                                text: "CheckOut",
-                                color: Colors.white,
-                                weight: FontWeight.bold,
-                              ))
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      body: _cartProvider.cartQty > 0
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  margin: EdgeInsets.only(top: 45, bottom: Dimensions.width15),
-                  padding: EdgeInsets.only(
-                      left: Dimensions.width5, right: Dimensions.width20),
-                  child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(
-                              left: 20.0, top: 15, bottom: 10),
-                          child: BigText(text: "Cart"),
-                        )
-                      ]),
-                ),
-                CodToggleBar(),
-                Container(
-                  // color: Colors.white,
-                  margin: EdgeInsets.only(
-                      top: Dimensions.height15, bottom: Dimensions.height15),
-                  padding: EdgeInsets.only(
-                      left: Dimensions.width20, right: Dimensions.width20),
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(Dimensions.radius20)),
-
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(10.0),
+                    Container(
+                      // margin:
+                      //     EdgeInsets.only(top: 45, bottom: Dimensions.width15),
+                      // padding: EdgeInsets.only(
+                      //     left: Dimensions.width5, right: Dimensions.width20),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          const Icon(
-                            Icons.timer_outlined,
-                            size: 15,
-                          ),
-                          SizedBox(
-                            width: Dimensions.width10,
-                          ),
-                          SmallText(text: "Delivery in"),
-                          SizedBox(
-                            width: Dimensions.width5,
-                          ),
-                          SmallText(
-                            text: "30-35 min",
-                            weight: FontWeight.bold,
-                          )
-                        ],
-                      ),
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                  left: 20.0, top: 15, bottom: 10),
+                              child: BigText(
+                                text: "Cart",
+                                weight: FontWeight.bold,
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                  right: 20.0, top: 15, bottom: 10),
+                              child: CodToggleBar(),
+                            )
+                          ]),
                     ),
-                  ),
-                ),
-                Container(
-                  margin: EdgeInsets.only(
-                      left: Dimensions.width20, right: Dimensions.width20),
-                  child: Container(
-                      child: Row(children: [
-                    const Expanded(child: Divider(thickness: 1.5)),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                      child: SmallText(
-                        text: "ITEM(S) ADDED",
-                        spacing: 3,
-                      ),
-                    ),
-                    const Expanded(child: Divider(thickness: 1.5)),
-                  ])),
-                ),
-                Container(
-                  // color: Colors.white,
-                  margin: EdgeInsets.only(
-                      top: Dimensions.height15, bottom: Dimensions.height15),
-                  padding: EdgeInsets.only(
-                      left: Dimensions.width20, right: Dimensions.width20),
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(Dimensions.radius30)),
+                    // Container(
+                    //     margin: EdgeInsets.only(bottom: Dimensions.width15),
+                    //     padding: EdgeInsets.only(
+                    //         left: Dimensions.width5, right: Dimensions.width20),
+                    //     child: Padding(
+                    //       padding: EdgeInsets.only(left: Dimensions.width15),
+                    //       child: CodToggleBar(),
+                    //     )),
+                    Container(
+                      // color: Colors.white,
+                      margin: EdgeInsets.only(
+                          top: Dimensions.height15,
+                          bottom: Dimensions.height15),
+                      padding: EdgeInsets.only(
+                          left: Dimensions.width20, right: Dimensions.width20),
+                      decoration: BoxDecoration(
+                          borderRadius:
+                              BorderRadius.circular(Dimensions.radius20)),
 
-                  child: StreamBuilder<QuerySnapshot>(
-                      stream: _productService.cart
-                          .doc(_productService.user!.uid)
-                          .collection("products")
-                          .snapshots(),
-                      builder:
-                          (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                        if (snapshot.hasError) {
-                          return Center(
-                            child: SmallText(text: "Something went wrong.."),
-                          );
-                        }
-
-                        if (!snapshot.hasData) {
-                          return Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        }
-
-                        return Card(
-                          child: Column(
+                      child: Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(10.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
                             children: [
-                              ListView(
-                                shrinkWrap: true,
-                                padding: EdgeInsets.only(left: 0, right: 0),
-                                children: snapshot.data!.docs
-                                    .map((DocumentSnapshot document) {
-                                  return ListTile(
-                                    title: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        SmallText(
-                                          text: document["productName"],
-                                          overFlow: TextOverflow.clip,
-                                          maxLines: 2,
-                                        ),
-                                        SmallText(
-                                          text: "\$${document['total']}",
-                                          weight: FontWeight.bold,
-                                        ),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            if (document["itemSize"] != null)
-                                              SmallText(
-                                                  text: document["itemSize"]),
-                                            if ((document['toppings'] as List)
-                                                    .length >
-                                                0)
-                                              SmallText(
-                                                  text:
-                                                      "${(document['toppings'] as List).length} toppings included")
-                                          ],
-                                        )
-                                      ],
-                                    ),
-                                    contentPadding: EdgeInsets.only(left: 8.0),
-                                    leading: document['itemType'] == 'Veg'
-                                        ? VegIcon()
-                                        : NonVegIcon(),
-                                  );
-                                }).toList(),
+                              const Icon(
+                                Icons.timer_outlined,
+                                size: 15,
+                              ),
+                              SizedBox(
+                                width: Dimensions.width10,
+                              ),
+                              SmallText(text: "Delivery in"),
+                              SizedBox(
+                                width: Dimensions.width5,
+                              ),
+                              SmallText(
+                                text: "30-35 min",
+                                weight: FontWeight.bold,
                               )
                             ],
                           ),
-                        );
-                      }),
-                ),
-                Container(
-                  margin: EdgeInsets.only(
-                      left: Dimensions.width20, right: Dimensions.width20),
-                  child: Container(
-                      child: Row(children: [
-                    const Expanded(child: Divider(thickness: 1.5)),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                      child: SmallText(
-                        text: "BILL SUMMARY",
-                        spacing: 3,
-                        height: 1,
+                        ),
                       ),
                     ),
-                    const Expanded(child: Divider(thickness: 1.5)),
-                  ])),
-                ),
-                Container(
-                  // color: Colors.white,
-                  margin: EdgeInsets.only(
-                      top: Dimensions.height15, bottom: Dimensions.height15),
-                  padding: EdgeInsets.only(
-                      left: Dimensions.width20, right: Dimensions.width20),
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(Dimensions.radius30)),
-
-                  child: Card(
-                    child: Column(
-                      children: [
-                        ListView(
-                          shrinkWrap: true,
-                          padding: EdgeInsets.only(
-                            left: 0,
-                            right: 0,
+                    Container(
+                      margin: EdgeInsets.only(
+                          left: Dimensions.width20, right: Dimensions.width20),
+                      child: Container(
+                          child: Row(children: [
+                        const Expanded(child: Divider(thickness: 1.5)),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+                          child: SmallText(
+                            text: "ITEM(S) ADDED",
+                            spacing: 3,
                           ),
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                      left: 8.0,
-                                      top: 8.0,
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        SmallText(
-                                          text: "Subtotal",
-                                          weight: FontWeight.bold,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsets.only(
-                                        left: 8.0,
-                                        top: 8.0,
-                                        right: Dimensions.width20),
-                                    child: Column(
-                                      children: [
-                                        SmallText(
-                                          text: "\$${_cartProvider.subTotal}",
-                                          weight: FontWeight.bold,
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                ],
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                      left: 8.0,
-                                      top: 8.0,
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Icon(
-                                          Icons.monetization_on,
-                                          size: Dimensions.iconSize24,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                        left: 8.0, top: 8.0, right: 210),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        SmallText(
-                                          text: "Saving",
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsets.only(
-                                        left: 8.0,
-                                        top: 8.0,
-                                        right: Dimensions.width20),
-                                    child: Column(
-                                      children: [
-                                        SmallText(
-                                          text: "\$${_cartProvider.saving}",
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                ],
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                      left: 8.0,
-                                      top: 8.0,
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Icon(
-                                          Icons.delivery_dining,
-                                          size: Dimensions.iconSize24,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                        left: 8.0, top: 8.0, right: 120),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        SmallText(
-                                          text: "Delivery partner fee",
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsets.only(
-                                        left: 8.0,
-                                        top: 8.0,
-                                        right: Dimensions.width20),
-                                    child: Column(
-                                      children: [
-                                        SmallText(
-                                          text: "\$${deliveryFee}",
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Container(
-                              margin: EdgeInsets.only(
-                                  left: Dimensions.width20,
-                                  right: Dimensions.width20),
-                              child: Container(
-                                  child: Row(children: [
-                                Expanded(child: Divider(thickness: 1.5)),
-                              ])),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                      left: 8.0,
-                                      top: 8.0,
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        SmallText(
-                                          text: "Grand Total",
-                                          weight: FontWeight.bold,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsets.only(
-                                        left: 8.0,
-                                        top: 8.0,
-                                        right: Dimensions.width20,
-                                        bottom: 8),
-                                    child: Column(
-                                      children: [
-                                        SmallText(
-                                          text: "\$${_payable}",
-                                          weight: FontWeight.bold,
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                ],
-                              ),
-                            ),
-                          ],
-                        )
-                      ],
+                        ),
+                        const Expanded(child: Divider(thickness: 1.5)),
+                      ])),
                     ),
-                  ),
+                    Container(
+                      // color: Colors.white,
+                      margin: EdgeInsets.only(
+                          top: Dimensions.height15,
+                          bottom: Dimensions.height15),
+                      padding: EdgeInsets.only(
+                          left: Dimensions.width20, right: Dimensions.width20),
+                      decoration: BoxDecoration(
+                          borderRadius:
+                              BorderRadius.circular(Dimensions.radius30)),
+
+                      child: StreamBuilder<QuerySnapshot>(
+                          stream: _productService.cart
+                              .doc(_productService.user!.uid)
+                              .collection("products")
+                              .snapshots(),
+                          builder:
+                              (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                            if (snapshot.hasError) {
+                              return Center(
+                                child:
+                                    SmallText(text: "Something went wrong.."),
+                              );
+                            }
+
+                            if (!snapshot.hasData) {
+                              return Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+
+                            return Card(
+                              child: Column(
+                                children: [
+                                  ListView(
+                                    shrinkWrap: true,
+                                    padding: EdgeInsets.only(left: 0, right: 0),
+                                    children: snapshot.data!.docs
+                                        .map((DocumentSnapshot document) {
+                                      return ListTile(
+                                        title: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceEvenly,
+                                          children: [
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                SmallText(
+                                                  text: document["productName"],
+                                                  overFlow: TextOverflow.clip,
+                                                  maxLines: 2,
+                                                ),
+                                                SizedBox(
+                                                  height: Dimensions.height5,
+                                                ),
+                                                if ((document.data()
+                                                        as Map<String, dynamic>)
+                                                    .containsKey("toppings"))
+                                                  Column(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.start,
+                                                    children:
+                                                        (document["toppings"]
+                                                                as List)
+                                                            .map((topping) {
+                                                      return Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .spaceBetween,
+                                                        children: [
+                                                          SmallText(
+                                                              text: topping[
+                                                                  "name"]),
+                                                          SizedBox(
+                                                            width: Dimensions
+                                                                .width5,
+                                                          ),
+                                                          SmallText(
+                                                              text: (topping[
+                                                                          "type"]
+                                                                      as String)
+                                                                  .capitalize!),
+                                                          SizedBox(
+                                                            width: Dimensions
+                                                                .width5,
+                                                          ),
+                                                          SmallText(
+                                                            text:
+                                                                "\$${topping["price"]}",
+                                                            weight:
+                                                                FontWeight.bold,
+                                                          ),
+                                                        ],
+                                                      );
+                                                    }).toList(),
+                                                  ),
+                                                SizedBox(
+                                                  height: Dimensions.height5,
+                                                ),
+
+                                                Row(
+                                                  children: [
+                                                    SmallText(
+                                                      text: "Total",
+                                                    ),
+                                                    SizedBox(
+                                                      width: Dimensions.width10,
+                                                    ),
+                                                    SmallText(
+                                                      text:
+                                                          "\$${document['total']}",
+                                                      weight: FontWeight.bold,
+                                                    ),
+                                                  ],
+                                                ),
+                                                // Row(
+                                                //   mainAxisAlignment:
+                                                //       MainAxisAlignment.spaceBetween,
+                                                //   children: [
+                                                //     if (document["itemSize"] != null)
+                                                //       SmallText(
+                                                //           text: document["itemSize"]),
+                                                //     if ((document['toppings'] as List)
+                                                //             .length >
+                                                //         0)
+                                                //       SmallText(
+                                                //           text:
+                                                //               "${(document['toppings'] as List).length} toppings included")
+                                                //   ],
+                                                // )
+                                              ],
+                                            ),
+                                            Flexible(
+                                              child: AddToCartWidget(
+                                                document: document,
+                                                screen: 'cart',
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                        contentPadding:
+                                            EdgeInsets.only(left: 8.0),
+                                        leading: document['itemType'] == 'Veg'
+                                            ? VegIcon()
+                                            : NonVegIcon(),
+                                      );
+                                    }).toList(),
+                                  )
+                                ],
+                              ),
+                            );
+                          }),
+                    ),
+                    Container(
+                      margin: EdgeInsets.only(
+                          left: Dimensions.width20, right: Dimensions.width20),
+                      child: Container(
+                          child: Row(children: [
+                        const Expanded(child: Divider(thickness: 1.5)),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+                          child: SmallText(
+                            text: "BILL SUMMARY",
+                            spacing: 3,
+                            height: 1,
+                          ),
+                        ),
+                        const Expanded(child: Divider(thickness: 1.5)),
+                      ])),
+                    ),
+                    Container(
+                      // color: Colors.white,
+                      margin: EdgeInsets.only(
+                          top: Dimensions.height15,
+                          bottom: Dimensions.height15),
+                      padding: EdgeInsets.only(
+                          left: Dimensions.width20, right: Dimensions.width20),
+                      decoration: BoxDecoration(
+                          borderRadius:
+                              BorderRadius.circular(Dimensions.radius30)),
+
+                      child: Card(
+                        child: Column(
+                          children: [
+                            ListView(
+                              shrinkWrap: true,
+                              padding: EdgeInsets.only(
+                                left: 0,
+                                right: 0,
+                              ),
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          left: 8.0,
+                                          top: 8.0,
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            SmallText(
+                                              text: "Subtotal",
+                                              weight: FontWeight.bold,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: EdgeInsets.only(
+                                          left: 8.0,
+                                          top: 8.0,
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            SmallText(
+                                              text:
+                                                  "\$${_cartProvider.subTotal}",
+                                              weight: FontWeight.bold,
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          left: 8.0,
+                                          top: 8.0,
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Icon(
+                                              Icons.monetization_on,
+                                              size: Dimensions.iconSize24,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                            left: 8.0, top: 8.0, right: 200),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            SmallText(
+                                              text: "Saving",
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: EdgeInsets.only(
+                                          left: 8.0,
+                                          top: 8.0,
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            SmallText(
+                                              text:
+                                                  "\$${_cartProvider.saving.toStringAsFixed(0)}",
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          left: 8.0,
+                                          top: 8.0,
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Icon(
+                                              Icons.delivery_dining,
+                                              size: Dimensions.iconSize24,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                            left: 8.0, top: 8.0, right: 120),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.start,
+                                          children: [
+                                            SmallText(
+                                              text: "Delivery partner fee",
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: EdgeInsets.only(
+                                          left: 8.0,
+                                          top: 8.0,
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            SmallText(
+                                              text: "\$${deliveryFee}",
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  margin: EdgeInsets.only(
+                                      left: Dimensions.width20,
+                                      right: Dimensions.width20),
+                                  child: Container(
+                                      child: Row(children: [
+                                    Expanded(child: Divider(thickness: 1.5)),
+                                  ])),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          left: 8.0,
+                                          top: 8.0,
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            SmallText(
+                                              text: "Grand Total",
+                                              weight: FontWeight.bold,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: EdgeInsets.only(
+                                            left: 8.0,
+                                            top: 8.0,
+                                            right: Dimensions.width20,
+                                            bottom: 8),
+                                        child: Column(
+                                          children: [
+                                            SmallText(
+                                              text: "\$${_payable}",
+                                              weight: FontWeight.bold,
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+                    Container(
+                      height: 160,
+                      color: Colors.blueGrey[900],
+                      child: Column(
+                        children: [
+                          Container(
+                            width: MediaQuery.of(context).size.width,
+                            height: 100,
+                            color: Colors.white,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              left: 8.0, bottom: 8),
+                                          child: Expanded(
+                                            child: SmallText(
+                                              text: "Deliver to this address",
+                                              weight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        InkWell(
+                                          onTap: () {
+                                            setState(() {
+                                              _loading = true;
+                                            });
+                                            locationData
+                                                .getCurrentPosition()
+                                                .then((value) {
+                                              setState(() {
+                                                _loading = false;
+                                              });
+                                              if (value != null) {
+                                                pushNewScreenWithRouteSettings(
+                                                  context,
+                                                  settings: RouteSettings(
+                                                      name: MapScreen.id),
+                                                  screen: MapScreen(),
+                                                  withNavBar: false,
+                                                  pageTransitionAnimation:
+                                                      PageTransitionAnimation
+                                                          .cupertino,
+                                                );
+                                                // Navigator.pushNamed(context, MapScreen.id);
+                                              } else {
+                                                setState(() {
+                                                  _loading = false;
+                                                });
+                                                print("Permission not allowed");
+                                              }
+                                            });
+                                          },
+                                          child: _loading
+                                              ? CircularProgressIndicator()
+                                              : Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          right: 8.0,
+                                                          bottom: 8),
+                                                  child: SmallText(
+                                                    text: "Change",
+                                                    color: Colors.red,
+                                                    weight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                        ),
+                                      ],
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: SmallText(
+                                        text: "$_location, $_address",
+                                        maxLines: 3,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ]),
+                            ),
+                          ),
+                          Center(
+                            child: Padding(
+                              padding: EdgeInsets.only(left: 20, right: 20),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      SmallText(
+                                        text:
+                                            '\$${_cartProvider.subTotal > 0 ? _payable.toStringAsFixed(0) : _cartProvider.subTotal.toStringAsFixed(0)}',
+                                        color: Colors.white,
+                                        weight: FontWeight.bold,
+                                      ),
+                                      SmallText(
+                                        text: '(Including taxes)',
+                                        color: Colors.white,
+                                        weight: FontWeight.bold,
+                                        size: 10,
+                                      )
+                                    ],
+                                  ),
+                                  ElevatedButton(
+                                      onPressed: () {
+                                        EasyLoading.show(
+                                            status: "Please wait..");
+                                        _userService
+                                            .getUserById(user!.uid)
+                                            .then((value) {
+                                          if (value['name'] == null) {
+                                            EasyLoading.dismiss();
+                                            pushNewScreenWithRouteSettings(
+                                              context,
+                                              settings: RouteSettings(
+                                                  name: ProfilePage.id),
+                                              screen: ProfilePage(),
+                                              withNavBar: false,
+                                              pageTransitionAnimation:
+                                                  PageTransitionAnimation
+                                                      .cupertino,
+                                            );
+                                          } else {
+                                            EasyLoading.show(
+                                                status: "Please wait..");
+                                            _cartProvider.getCartTotal();
+                                            _saveOrder(_cartProvider, _payable);
+                                            EasyLoading.showSuccess(
+                                                "Order placed successfully");
+                                          }
+                                        });
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                          primary: Colors.redAccent),
+                                      child: _checkingUser
+                                          ? CircularProgressIndicator()
+                                          : SmallText(
+                                              text: "CheckOut",
+                                              color: Colors.white,
+                                              weight: FontWeight.bold,
+                                            ))
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            )
-          : Center(
-              child: SmallText(text: "Cart is empty. Continue ordering"),
-            ),
+              )
+            : Center(
+                child: SmallText(text: "Cart is empty. Continue ordering"),
+              ),
+      ),
     );
   }
 }

@@ -73,7 +73,7 @@ class _CartNotificationState extends State<CartNotification> {
                     context,
                     settings: RouteSettings(name: CartPage.id),
                     screen: CartPage(),
-                    withNavBar: false,
+                    withNavBar: true,
                     pageTransitionAnimation: PageTransitionAnimation.cupertino,
                   );
                 },

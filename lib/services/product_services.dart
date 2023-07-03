@@ -38,11 +38,13 @@ class ProductService {
     return cart.doc(user!.uid).collection('products').add({
       'productId': document['productId'],
       'productName': document['productName'],
-      'quantity': 1,
+      'productImage': document['productImage'],
+      'qty': 1,
       'sku': document['sku'],
-      'price': price == null ? document['price'] : price,
+      'price': document['price'],
       'comparedPrice': document['comparedPrice'],
-      'total': document['price'],
+      'total': price == null ? document['price'] : price,
+      'itemType': document['itemType'],
       if (productSize != null) 'itemSize': productSize,
       if (toppings != null) 'toppings': toppings
     });
@@ -60,8 +62,7 @@ class ProductService {
             throw Exception("Product does not exist in cart !");
           }
           // Perform an update on the document
-          transaction
-              .update(documentReference, {'qty': qty, 'total': total * qty});
+          transaction.update(documentReference, {'qty': qty, 'total': total});
 
           // Return the new count
           return qty;
