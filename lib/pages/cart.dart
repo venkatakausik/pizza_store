@@ -230,6 +230,10 @@ class _CartPageState extends State<CartPage> {
                               );
                             }
 
+                            if (snapshot.data!.docs.isEmpty) {
+                              _cartProvider.getCartTotal();
+                            }
+
                             return Card(
                               child: Column(
                                 children: [

@@ -63,10 +63,12 @@ class _CounterWidgetState extends State<CounterWidget> {
                           _productService
                               .removeFromCart(widget.docId)
                               .then((value) {
-                            setState(() {
-                              _updating = false;
-                              _exists = false;
-                            });
+                            if (mounted) {
+                              setState(() {
+                                _updating = false;
+                                _exists = false;
+                              });
+                            }
                             _productData
                                 .removeProductFromMap(widget.document.id);
                             _productService.checkCartData();

@@ -68,8 +68,7 @@ class _ProductSizeWidgetState extends State<ProductSizeWidget> {
                   productData.getProductPriceForSize(
                       widget.document.id,
                       (widget.document["itemSize"] as List)[position]["name"],
-                      (widget.document["itemSize"] as List)[position]["price"]
-                          .toString());
+                      (widget.document["itemSize"] as List)[position]["price"]);
                 },
                 child: Card(
                   shape: (selectedSizeIndex == position)

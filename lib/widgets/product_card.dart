@@ -47,7 +47,6 @@ class _ProductCardState extends State<ProductCard> {
               MaterialPageRoute(
                   builder: (context) =>
                       ProductDetails(document: widget.document))).then((value) {
-            print("Value - $value");
             var _qty = 1;
             var docId = "";
             FirebaseFirestore.instance
@@ -140,7 +139,6 @@ class _ProductCardState extends State<ProductCard> {
                                           builder: (context) => ProductDetails(
                                               document: widget.document)))
                                   .then((value) {
-                                print("Value - $value");
                                 var _qty = 1;
                                 var docId = "";
                                 FirebaseFirestore.instance
