@@ -1,15 +1,12 @@
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:persistent_bottom_nav_bar_v2/persistent-tab-view.dart';
 import 'package:pizza_store/pages/home/food_page_body.dart';
 import 'package:pizza_store/pages/map_screen.dart';
-import 'package:pizza_store/pages/profile/profile_page.dart';
 import 'package:pizza_store/providers/auth_provider.dart';
 import 'package:pizza_store/providers/location_provider.dart';
-import 'package:pizza_store/widgets/big_text.dart';
 import 'package:pizza_store/widgets/small_text.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';

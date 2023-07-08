@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:pizza_store/pages/cart.dart';
+import 'package:pizza_store/pages/category_list_screen.dart';
 import 'package:pizza_store/pages/food/category_food_list.dart';
 import 'package:pizza_store/pages/home/home_screen.dart';
 import 'package:pizza_store/pages/home/main_page.dart';
@@ -78,6 +79,7 @@ class MyApp extends StatelessWidget {
         MainScreen.id: (context) => MainScreen(),
         ProfilePage.id: (context) => ProfilePage(),
         CategoryFoodList.id: (context) => CategoryFoodList(),
+        CategoryListScreen.id: (context) => CategoryListScreen(),
         CartPage.id: (context) => CartPage(),
         EditProfilePage.id: (context) => EditProfilePage(),
         OrderScreen.id: (context) => OrderScreen(),

@@ -47,7 +47,7 @@ class _ProductCardState extends State<ProductCard> {
               MaterialPageRoute(
                   builder: (context) =>
                       ProductDetails(document: widget.document))).then((value) {
-            var _qty = 1;
+            var _qty = 0;
             var docId = "";
             FirebaseFirestore.instance
                 .collection('cart')
@@ -139,7 +139,7 @@ class _ProductCardState extends State<ProductCard> {
                                           builder: (context) => ProductDetails(
                                               document: widget.document)))
                                   .then((value) {
-                                var _qty = 1;
+                                var _qty = 0;
                                 var docId = "";
                                 FirebaseFirestore.instance
                                     .collection('cart')
@@ -159,15 +159,13 @@ class _ProductCardState extends State<ProductCard> {
                                     }
                                   });
                                 });
-                                print("Qty - $_qty");
-                                print("DocId - $docId");
 
-                                _addToCartWidget = CounterWidget(
+                                
+                                setState(() {_addToCartWidget = CounterWidget(
                                     document: widget.document,
                                     qty: _qty,
                                     docId: docId,
-                                    screen: "productCard");
-                                setState(() {});
+                                    screen: "productCard");});
                               });
                             },
                             child: SmallText(

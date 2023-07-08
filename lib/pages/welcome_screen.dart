@@ -1,8 +1,6 @@
-import 'dart:ffi';
-
+import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
+import 'package:get/get.dart';
 import 'package:pizza_store/pages/map_screen.dart';
 import 'package:pizza_store/providers/auth_provider.dart';
 import 'package:pizza_store/providers/location_provider.dart';
@@ -20,6 +18,29 @@ class WelcomeScreen extends StatefulWidget {
 }
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
+
+  @override
+  void initState() {
+    super.initState();
+    BackButtonInterceptor.add(myInterceptor);
+  }
+
+  @override
+  void dispose() {
+    BackButtonInterceptor.remove(myInterceptor);
+    super.dispose();
+  }
+
+  bool myInterceptor(bool stopDefaultButtonEvent, RouteInfo info) {
+    if(Get.previousRoute == 'splash-screen'){
+      return false;
+    } else {
+      return true;
+    }
+    // print("BACK BUTTON!"); // Do some stuff.
+     // return true if u want to stop back
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);

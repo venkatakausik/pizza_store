@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:persistent_bottom_nav_bar_v2/persistent-tab-view.dart';
+import 'package:pizza_store/pages/category_list_screen.dart';
 import 'package:pizza_store/services/product_services.dart';
 import 'package:pizza_store/widgets/small_text.dart';
 import 'package:provider/provider.dart';
@@ -38,7 +39,7 @@ class _CategoryImageTextState extends State<CategoryImageText> {
   Widget build(BuildContext context) {
     StoreProvider _storeData = Provider.of<StoreProvider>(context);
     return FutureBuilder(
-        future: _services.category.where("published", isEqualTo: true).get(),
+        future: _services.category.where("published", isEqualTo: true).limit(5).get(),
         builder: (_, snapShot) {
           if (snapShot.hasError) {
             return Center(
@@ -57,8 +58,38 @@ class _CategoryImageTextState extends State<CategoryImageText> {
           }
           return ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: snapShot.data!.docs.length,
+              itemCount: snapShot.data!.docs.length + 1,
               itemBuilder: (context, int index) {
+                if(index == snapShot.data!.docs.length){
+                  return Container(
+                        margin: EdgeInsets.only(left: 15, right: 15),
+                        child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              InkWell(
+                                onTap: () {
+                                  
+                                  pushNewScreenWithRouteSettings(
+                                    context,
+                                    settings: RouteSettings(
+                                        name: CategoryListScreen.id),
+                                    screen: CategoryListScreen(),
+                                    withNavBar: false,
+                                    pageTransitionAnimation:
+                                        PageTransitionAnimation.cupertino,
+                                  );
+                                },
+                                child: Column(
+                                  children: [
+                                    _buildCircleArrow(
+                                        ),
+                                    SmallText(text: "View All")
+                                  ],
+                                ),
+                              ),
+                            ]));
+                }
                 DocumentSnapshot category = snapShot.data!.docs[index];
                 return _catList.contains(category.get('name'))
                     ? Container(
@@ -112,6 +143,27 @@ class _CategoryImageTextState extends State<CategoryImageText> {
             ],
             image: DecorationImage(
                 fit: BoxFit.cover, image: NetworkImage(assetImagePath))),
+      ),
+    );
+  }
+
+  _buildCircleArrow() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: Container(
+        height: 50,
+        width: 50,
+        padding: EdgeInsets.all(0.5),
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(40),
+            boxShadow: [
+              BoxShadow(
+                  color: Color(0xFFe8e8e8),
+                  blurRadius: 1.0,
+                  ),
+            ],
+            ),
+            child: Center(child: Icon(Icons.navigate_next_outlined, size: 50,)),
       ),
     );
   }

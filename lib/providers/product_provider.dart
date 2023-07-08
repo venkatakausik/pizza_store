@@ -13,10 +13,14 @@ class ProductProvider with ChangeNotifier {
 
   getProductToppings(docId, topping) {
     List toppings = [];
+    if(sizeToppingsDoc.containsKey(docId)){
     if ((sizeToppingsDoc[docId] as Map).containsKey("toppings")) {
       toppings = sizeToppingsDoc[docId]['toppings'];
     }
     toppings.add(topping);
+    } else {
+     sizeToppingsDoc[docId]= {}; 
+    }
     sizeToppingsDoc[docId]['toppings'] = toppings;
     notifyListeners();
   }

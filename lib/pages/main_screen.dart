@@ -1,7 +1,6 @@
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:pizza_store/pages/cart.dart';
 import 'package:pizza_store/pages/home/main_page.dart';
 import 'package:pizza_store/pages/profile/profile_page.dart';
@@ -20,6 +19,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int selectedIndex = 0;
+
   @override
   Widget build(BuildContext context) {
     List<Widget> _buildScreens() {

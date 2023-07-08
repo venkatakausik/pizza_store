@@ -2,19 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:pizza_store/providers/cart_provider.dart';
 import 'package:pizza_store/services/product_services.dart';
 import 'package:pizza_store/widgets/product_details.dart';
 import 'package:pizza_store/widgets/small_text.dart';
-import 'package:pizza_store/widgets/veg_icon.dart';
 import 'package:provider/provider.dart';
-import 'package:select_card/select_card.dart';
 
 import '../providers/product_provider.dart';
-import '../utils/dimensions.dart';
 import 'counter_widget.dart';
-import 'non_veg_icon.dart';
 
 class AddToCartWidget extends StatefulWidget {
   final DocumentSnapshot document;
@@ -26,7 +20,7 @@ class AddToCartWidget extends StatefulWidget {
 }
 
 class _AddToCartWidgetState extends State<AddToCartWidget> {
-  ProductService _productServices = ProductService();
+  final ProductService _productServices = ProductService();
   User? user = FirebaseAuth.instance.currentUser;
   bool _loading = true;
   bool _exist = false;
@@ -226,7 +220,60 @@ class _AddToCartWidgetState extends State<AddToCartWidget> {
                                 'Please choose the size of ${widget.document["category"]["mainCategory"]}');
                       }
                     }
-                  } else {
+                  } else if ((widget.document['toppings'] as List).length > 0){
+                    if (widget.screen == 'productCard') {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    ProductDetails(document: widget.document)));
+                    } else {
+                      var _price = widget.document['price'];
+                      if ((_productData.sizeToppingsDoc[widget.document.id]
+                                  as Map)
+                              .containsKey('toppings')) {
+                            for (int i = 0;
+                                i <
+                                    (_productData.sizeToppingsDoc[widget
+                                            .document.id]["toppings"] as List)
+                                        .length;
+                                i++) {
+                              _price = _price +
+                                  _productData
+                                          .sizeToppingsDoc[widget.document.id]
+                                      ["toppings"][i]['price'];
+                            }
+                            _productServices
+                                .addToCart(
+                                    widget.document,
+                                   null,
+                                    _price,
+                                    (_productData
+                                            .sizeToppingsDoc[widget.document.id]
+                                        ["toppings"] as List))
+                                .then((value) {
+                              initState();
+                              setState(() {
+                                _exist = true;
+                              });
+                            });
+                          } else {
+                            _productServices
+                                .addToCart(
+                                    widget.document,
+                                    null,
+                                    _price,
+                                    null)
+                                .then((value) {
+                              initState();
+                              setState(() {
+                                _exist = true;
+                              });
+                            });
+                          }
+
+                    }
+                  }else {
                     _productServices
                         .addToCart(widget.document, null, null, null)
                         .then((value) {

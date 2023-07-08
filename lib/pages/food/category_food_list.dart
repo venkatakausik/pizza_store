@@ -134,7 +134,14 @@ class _CategoryFoodListState extends State<CategoryFoodList> {
                         }
 
                         if (snapshot.data!.docs.isEmpty) {
-                          return Container();
+                          return Container(
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(20.0),
+                                child: SmallText(text: "Oops ! We're not serving this now. Visit our restuarant for more recipes", maxLines: 2, overFlow: TextOverflow.clip,),
+                              ),
+                            ),
+                          );
                         }
                         return ListView.builder(
                             physics: NeverScrollableScrollPhysics(),

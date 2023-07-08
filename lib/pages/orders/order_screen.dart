@@ -93,6 +93,7 @@ class _OrderScreenState extends State<OrderScreen> {
                   .where('userId', isEqualTo: user!.uid)
                   .where('orderStatus',
                       isEqualTo: tag > 0 ? _orderProvider.status : null)
+                      .orderBy('timestamp', descending: true)
                   .snapshots(),
               builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
                 if (snapshot.hasError) {

@@ -42,7 +42,7 @@ class _CounterWidgetState extends State<CounterWidget> {
   @override
   Widget build(BuildContext context) {
     ProductProvider _productData = Provider.of<ProductProvider>(context);
-    return _exists
+    return _qty > 0 && _exists 
         ? Container(
             color: Colors.white,
             height: 56,

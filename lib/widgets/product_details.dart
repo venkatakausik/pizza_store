@@ -4,9 +4,6 @@ import 'package:back_button_interceptor/back_button_interceptor.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:pizza_store/providers/product_provider.dart';
 import 'package:pizza_store/widgets/non_veg_icon.dart';
 import 'package:pizza_store/widgets/product_size_widget.dart';
@@ -14,7 +11,6 @@ import 'package:pizza_store/widgets/product_toppings_widget.dart';
 import 'package:pizza_store/widgets/small_text.dart';
 import 'package:pizza_store/widgets/veg_icon.dart';
 import 'package:provider/provider.dart';
-import 'package:select_card/select_card.dart';
 
 import '../utils/dimensions.dart';
 import 'add_to_cart_widget.dart';
@@ -50,7 +46,6 @@ class _ProductDetailsState extends State<ProductDetails> {
 
   @override
   Widget build(BuildContext context) {
-    ProductProvider productData = Provider.of<ProductProvider>(context);
     String offer = (100 *
             (widget.document['comparedPrice'] - widget.document['price']) /
             widget.document['comparedPrice'])

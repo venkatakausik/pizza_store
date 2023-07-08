@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:pinput/pinput.dart';
 import 'package:pizza_store/pages/home/main_page.dart';
 import 'package:pizza_store/pages/landing_screen.dart';
 import 'package:pizza_store/pages/main_screen.dart';
@@ -46,7 +47,6 @@ class AuthProvider with ChangeNotifier {
 
     final PhoneCodeSent smsOtpSend = (String verId, int? resendToken) {
       this.verificationId = verId;
-
       smsOtpDialog(context!, number!);
     } as PhoneCodeSent;
 
@@ -68,6 +68,26 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future smsOtpDialog(BuildContext context, String number) {
+    final defaultPinTheme = PinTheme(
+          width: 56,
+          height: 56,
+          textStyle: TextStyle(fontSize: 20, color: Color.fromRGBO(30, 60, 87, 1), fontWeight: FontWeight.w600),
+          decoration: BoxDecoration(
+            border: Border.all(color: Color.fromRGBO(234, 239, 243, 1)),
+            borderRadius: BorderRadius.circular(20),
+          ),
+        );
+
+    final focusedPinTheme = defaultPinTheme.copyDecorationWith(
+      border: Border.all(color: Color.fromRGBO(114, 178, 238, 1)),
+      borderRadius: BorderRadius.circular(8),
+    );
+
+    final submittedPinTheme = defaultPinTheme.copyWith(
+      decoration: defaultPinTheme.decoration?.copyWith(
+        color: Color.fromRGBO(234, 239, 243, 1),
+      ),
+    );
     return showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -79,24 +99,30 @@ class AuthProvider with ChangeNotifier {
                 SmallText(text: "Enter 6 digit OTP"),
               ],
             ),
-            content: Container(
-              height: 85,
-              child: TextField(
-                textAlign: TextAlign.center,
-                maxLength: 6,
-                keyboardType: TextInputType.number,
-                onChanged: (value) {
-                  this.smsOtp = value;
-                },
-              ),
-            ),
-            actions: [
-              TextButton(
-                  onPressed: () async {
+            content: 
+            // Container(
+            //   height: 85,
+            //   child: TextField(
+            //     textAlign: TextAlign.center,
+            //     maxLength: 6,
+            //     keyboardType: TextInputType.number,
+            //     onChanged: (value) {
+            //       this.smsOtp = value;
+            //     },
+            //   ),
+            // ),
+            Pinput(
+              defaultPinTheme: defaultPinTheme,
+              focusedPinTheme: focusedPinTheme,
+              submittedPinTheme: submittedPinTheme,
+              length: 6,
+              pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
+              showCursor: true,
+              onCompleted: (pin) async {
                     try {
                       PhoneAuthCredential phoneAuthCredential =
                           PhoneAuthProvider.credential(
-                              verificationId: verificationId, smsCode: smsOtp);
+                              verificationId: verificationId, smsCode: pin);
                       final User user = (await _auth
                               .signInWithCredential(phoneAuthCredential))
                           .user!;
@@ -140,10 +166,10 @@ class AuthProvider with ChangeNotifier {
                       notifyListeners();
                       print(e.toString());
                       Navigator.of(context).pop();
-                    }
-                  },
-                  child: SmallText(text: "Done"))
-            ],
+                    }},
+            ),
+            
+            
           );
         }).whenComplete(() {
       this.loading = false;

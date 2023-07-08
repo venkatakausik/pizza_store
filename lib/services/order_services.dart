@@ -63,6 +63,13 @@ class OrderServices {
       );
     }
 
+    if (document['orderStatus'] == 'Rejected') {
+      return Icon(
+        Icons.cancel_outlined,
+        color: statusColor(document),
+      );
+    }
+
     return Icon(
       Icons.assignment_turned_in_outlined,
       color: statusColor(document),

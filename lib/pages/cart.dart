@@ -261,6 +261,13 @@ class _CartPageState extends State<CartPage> {
                                                 ),
                                                 if ((document.data()
                                                         as Map<String, dynamic>)
+                                                    .containsKey("itemSize") && !(document.data()
+                                                        as Map<String, dynamic>)['itemSize'].isBlank)
+                                                        SmallText(
+                                                  text: document["itemSize"],
+                                                ),
+                                                if ((document.data()
+                                                        as Map<String, dynamic>)
                                                     .containsKey("toppings"))
                                                   Column(
                                                     mainAxisAlignment:

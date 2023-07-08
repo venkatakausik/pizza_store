@@ -54,7 +54,8 @@ dependencies:
   firebase_messaging: ^14.6.2
   flutter_local_notifications: ^14.1.1
   http: ^0.13.6
-  intl: 0.17.0
+  intl: 0.18.0
+  pinput: ^2.2.31
   select_card: ^0.0.9
   flutter_slidable: ^3.0.0
   back_button_interceptor: ^6.0.2
@@ -74,6 +75,13 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^2.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_icons:
+  image_path: "assets/images/cat-0.png" 
+  android: true
+  ios: true
+
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

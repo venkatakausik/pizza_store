@@ -44,9 +44,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
   void initState() {
     _userServices.getUserById(user!.uid).then((value) {
       if (mounted) {
+        var userDataMap = (value.data() as Map);
         setState(() {
-          nameTextController.text = value['name'];
-          emailTextController.text = value['email'];
+          nameTextController.text = userDataMap.containsKey('name') && (userDataMap['name'] != null && userDataMap['name'] != '') ? value['name'] : '';
+          emailTextController.text = userDataMap.containsKey('email') && (userDataMap['email'] != null && userDataMap['email'] != '') ? value['email'] : '';
           mobileController.text = user!.phoneNumber!;
         });
       }
